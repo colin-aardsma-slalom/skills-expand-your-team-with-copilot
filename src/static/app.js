@@ -861,6 +861,54 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeRangeFilter,
   };
 
+  // Konami Code Easter Egg
+  const konamiSequence = [
+    "ArrowUp", "ArrowUp",
+    "ArrowDown", "ArrowDown",
+    "ArrowLeft", "ArrowRight",
+    "ArrowLeft", "ArrowRight",
+    "b", "a",
+  ];
+  let konamiProgress = 0;
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === konamiSequence[konamiProgress]) {
+      konamiProgress++;
+      if (konamiProgress === konamiSequence.length) {
+        konamiProgress = 0;
+        showKonamiEasterEgg();
+      }
+    } else {
+      konamiProgress = event.key === konamiSequence[0] ? 1 : 0;
+    }
+  });
+
+  function showKonamiEasterEgg() {
+    const easterEgg = document.getElementById("konami-easter-egg");
+    easterEgg.classList.remove("hidden");
+    setTimeout(() => {
+      easterEgg.classList.add("show");
+    }, 10);
+  }
+
+  function closeKonamiEasterEgg() {
+    const easterEgg = document.getElementById("konami-easter-egg");
+    easterEgg.classList.remove("show");
+    setTimeout(() => {
+      easterEgg.classList.add("hidden");
+    }, 300);
+  }
+
+  document.getElementById("konami-close").addEventListener("click", closeKonamiEasterEgg);
+  document.getElementById("konami-dismiss").addEventListener("click", closeKonamiEasterEgg);
+
+  window.addEventListener("click", (event) => {
+    const easterEgg = document.getElementById("konami-easter-egg");
+    if (event.target === easterEgg) {
+      closeKonamiEasterEgg();
+    }
+  });
+
   // Initialize app
   checkAuthentication();
   initializeFilters();
