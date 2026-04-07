@@ -572,9 +572,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="share-button" data-activity="${name}" aria-label="Share activity" title="Share this activity">
             🔗 Share
           </button>
-          <div class="share-popover hidden" id="share-popover-${name.replace(/\s+/g, '-')}">
-            <button class="share-option copy-link-button" data-activity="${name}">📋 Copy Link</button>
-            <button class="share-option email-share-button" data-activity="${name}">📧 Email</button>
+          <div class="share-popover hidden" id="share-popover-${name.replace(/\s+/g, '-')}" role="menu" aria-label="Share options">
+            <button class="share-option copy-link-button" data-activity="${name}" role="menuitem">📋 Copy Link</button>
+            <button class="share-option email-share-button" data-activity="${name}" role="menuitem">📧 Email</button>
           </div>
         </div>
       </div>
@@ -608,11 +608,13 @@ document.addEventListener("DOMContentLoaded", () => {
       sharePopover.classList.toggle("hidden");
     });
 
+    const getActivityShareUrl = () =>
+      `${window.location.origin}${window.location.pathname}?activity=${encodeURIComponent(name)}`;
+
     const copyLinkButton = activityCard.querySelector(".copy-link-button");
     copyLinkButton.addEventListener("click", (event) => {
       event.stopPropagation();
-      const url = `${window.location.origin}${window.location.pathname}?activity=${encodeURIComponent(name)}`;
-      navigator.clipboard.writeText(url).then(() => {
+      navigator.clipboard.writeText(getActivityShareUrl()).then(() => {
         showMessage("Link copied to clipboard!", "success");
       }).catch(() => {
         showMessage("Could not copy link. Try again.", "error");
@@ -623,14 +625,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const emailShareButton = activityCard.querySelector(".email-share-button");
     emailShareButton.addEventListener("click", (event) => {
       event.stopPropagation();
-      const url = `${window.location.origin}${window.location.pathname}?activity=${encodeURIComponent(name)}`;
       const subject = encodeURIComponent(`Check out this activity: ${name}`);
       const body = encodeURIComponent(
         `I wanted to share this extracurricular activity with you!\n\n` +
         `Activity: ${name}\n` +
         `Description: ${details.description}\n` +
         `Schedule: ${formatSchedule(details)}\n\n` +
-        `View it here: ${url}`
+        `View it here: ${getActivityShareUrl()}`
       );
       window.location.href = `mailto:?subject=${subject}&body=${body}`;
       sharePopover.classList.add("hidden");
@@ -916,6 +917,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Highlight shared activity from URL parameter
+  const MAX_HIGHLIGHT_ATTEMPTS = 10;
+
   function highlightSharedActivity() {
     const params = new URLSearchParams(window.location.search);
     const activityName = params.get("activity");
@@ -936,7 +939,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => tryHighlight(attempts - 1), 300);
       }
     };
-    tryHighlight(10);
+    tryHighlight(MAX_HIGHLIGHT_ATTEMPTS);
   }
 
   // Initialize app

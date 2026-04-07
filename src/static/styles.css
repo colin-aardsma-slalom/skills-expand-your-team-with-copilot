@@ -189,7 +189,6 @@ section h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
 }
 
 /* Activity Tag */
