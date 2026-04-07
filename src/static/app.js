@@ -568,6 +568,15 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `
         }
+        <div class="share-container">
+          <button class="share-button" data-activity="${name}" aria-label="Share activity" title="Share this activity">
+            🔗 Share
+          </button>
+          <div class="share-popover hidden" id="share-popover-${name.replace(/\s+/g, '-')}">
+            <button class="share-option copy-link-button" data-activity="${name}">📋 Copy Link</button>
+            <button class="share-option email-share-button" data-activity="${name}">📧 Email</button>
+          </div>
+        </div>
       </div>
     `;
 
@@ -586,6 +595,46 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handler for share button
+    const shareButton = activityCard.querySelector(".share-button");
+    const sharePopover = activityCard.querySelector(".share-popover");
+    shareButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      // Close all other open popovers
+      document.querySelectorAll(".share-popover").forEach((p) => {
+        if (p !== sharePopover) p.classList.add("hidden");
+      });
+      sharePopover.classList.toggle("hidden");
+    });
+
+    const copyLinkButton = activityCard.querySelector(".copy-link-button");
+    copyLinkButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const url = `${window.location.origin}${window.location.pathname}?activity=${encodeURIComponent(name)}`;
+      navigator.clipboard.writeText(url).then(() => {
+        showMessage("Link copied to clipboard!", "success");
+      }).catch(() => {
+        showMessage("Could not copy link. Try again.", "error");
+      });
+      sharePopover.classList.add("hidden");
+    });
+
+    const emailShareButton = activityCard.querySelector(".email-share-button");
+    emailShareButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const url = `${window.location.origin}${window.location.pathname}?activity=${encodeURIComponent(name)}`;
+      const subject = encodeURIComponent(`Check out this activity: ${name}`);
+      const body = encodeURIComponent(
+        `I wanted to share this extracurricular activity with you!\n\n` +
+        `Activity: ${name}\n` +
+        `Description: ${details.description}\n` +
+        `Schedule: ${formatSchedule(details)}\n\n` +
+        `View it here: ${url}`
+      );
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      sharePopover.classList.add("hidden");
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -861,8 +910,37 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeRangeFilter,
   };
 
+  // Close share popovers when clicking outside
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".share-popover").forEach((p) => p.classList.add("hidden"));
+  });
+
+  // Highlight shared activity from URL parameter
+  function highlightSharedActivity() {
+    const params = new URLSearchParams(window.location.search);
+    const activityName = params.get("activity");
+    if (!activityName) return;
+
+    // Wait for cards to render, then scroll to the matching card
+    const tryHighlight = (attempts) => {
+      const cards = document.querySelectorAll(".activity-card");
+      for (const card of cards) {
+        const heading = card.querySelector("h4");
+        if (heading && heading.textContent.trim() === activityName) {
+          card.classList.add("highlighted-activity");
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
+      if (attempts > 0) {
+        setTimeout(() => tryHighlight(attempts - 1), 300);
+      }
+    };
+    tryHighlight(10);
+  }
+
   // Initialize app
   checkAuthentication();
   initializeFilters();
-  fetchActivities();
+  fetchActivities().then(highlightSharedActivity);
 });
